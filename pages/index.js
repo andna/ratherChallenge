@@ -1,59 +1,160 @@
-import React, { useEffect } from "react";
-import Head from 'next/head'
-import Image from 'next/image'
-import styles from '../styles/Home.module.css'
+import React, { useEffect, useState } from "react";
 import { ethers } from 'ethers';
-import { SiweMessage } from 'siwe';
-import Button from '@mui/material/Button';
+import detectEthereumProvider from '@metamask/detect-provider'
+import Loader from "../components/loader";
+import ACard from "../components/ACard";
+import Layout from "../components/layout";
+import tokenApi from "./tokenAbiQuiz"
+import Survey from "../components/survey";
 
 
 export default function Home() {
+  const ropstenChainId = '0x3';
+  const tokenAddressQUIZ = '0x74f0b668ea3053052deaa5eedd1815f579f0ee03';
+  const [provider, setProvider] = useState();
+  //const [signer, setSigner] = useState();
+  const [detectingEthereum, setDetectingEthereum] = useState(true);
+  const [hasMetamaskInstalled, setHasMetamaskInstalled] = useState();
+  const [isConnectedToRopsten, setIsConnectedToRopsten] = useState();
+  const [connectedWallet, setConnectedWallet] = useState();
+  const [quizBalance, setQuizBalance] = useState();
 
   useEffect(function mount() {
-    const domain = window.location.host;
-    const origin = window.location.origin;
-    const provider = new ethers.providers.Web3Provider(window.ethereum);
-    const signer = provider.getSigner();
+    detectEthereum();
+  }, [])
 
-    function createSiweMessage(address, statement) {
-      const message = new SiweMessage({
-        domain,
-        address,
-        statement,
-        uri: origin,
-        version: '1',
-        chainId: '1'
+  useEffect(() => {
+    if(provider){
+      //setSigner(provider.getSigner());
+      checkNetwork();
+    }
+  }, [provider])
+
+  useEffect(() => {
+    if(isConnectedToRopsten != undefined){
+      setHasMetamaskInstalled(true);
+    }
+  }, [isConnectedToRopsten])
+
+  useEffect(() => {
+    if(hasMetamaskInstalled != undefined){
+      setDetectingEthereum(false);
+      if(hasMetamaskInstalled){
+        window.ethereum
+            .request({ method: 'eth_accounts' })
+            .then(updateAccounts)
+      }
+    }
+  }, [hasMetamaskInstalled])
+
+  function updateAccounts(accounts){
+    obtainBalance(accounts[0]);
+    setConnectedWallet(accounts[0])
+  }
+
+  async function obtainBalance(accountAddress){
+
+    //TODO obtain from source, but of "corse" there's a cors block :)
+    /*fetch("https://ratherlabs-challenges.s3.sa-east-1.amazonaws.com/survey-sample.json", {
+      'mode': 'cors', 'headers': { 'Access-Control-Allow-Origin': '*', }})
+        .then(res => res.json()).then(data => tokenApi = data);*/
+
+    const contract = new ethers.Contract(tokenAddressQUIZ, tokenApi, provider);
+    const balance = (await contract.balanceOf(accountAddress)).toString();
+    setQuizBalance(balance);
+  }
+
+  function checkNetwork(){
+    window.ethereum
+        .request({ method: 'eth_chainId' })
+        .then((chainId)=>{
+          setIsConnectedToRopsten(chainId === ropstenChainId)
+        })
+  }
+
+
+  function setNewProvider(){
+    setProvider(new ethers.providers.Web3Provider(window.ethereum));
+  }
+
+  async function detectEthereum() {
+
+    const detected = await detectEthereumProvider()
+
+    if (detected) {
+      window.ethereum.on("chainChanged", () => {
+        setNewProvider();
       });
-      return message.prepareMessage();
+      window.ethereum.on("accountsChanged", updateAccounts);
+      setNewProvider();
+    } else {
+      setHasMetamaskInstalled(false);
     }
 
-    function connectWallet() {
-      provider.send('eth_requestAccounts', [])
-          .catch(() => console.log('user rejected request'));
+  }
+
+  async function changeNetwork() {
+    if (window.ethereum) {
+      try {
+        await window.ethereum.request({
+          method: 'wallet_switchEthereumChain',
+          params: [{ chainId: ropstenChainId }],
+        })
+      } catch (error) {
+        console.error(error);
+      }
     }
+  }
 
-    async function signInWithEthereum() {
-      const message = createSiweMessage(
-          await signer.getAddress(),
-          'Sign in with Ethereum to the app.'
-      );
-      console.log(await signer.signMessage(message));
-    }
+  function connectWallet() {
+    provider.send('eth_requestAccounts', [])
+        .catch(() => console.log('user rejected request'));
+  }
 
-    const connectWalletBtn = document.getElementById('connectWalletBtn');
-    const siweBtn = document.getElementById('siweBtn');
-    connectWalletBtn.onclick = connectWallet;
-    siweBtn.onclick = signInWithEthereum;
 
-  })
   return (
-    <div className={styles.container}>
-      <div>
-        <Button variant="contained" id={'connectWalletBtn'}>Connect wallet</Button>
-      </div>
-      <div>
-          <Button variant="contained" id={'siweBtn'}>Sign-in with Ethereum</Button>
-      </div>
-    </div>
+
+    <Layout>
+        {detectingEthereum ?
+            <Loader />
+        :
+            <>{hasMetamaskInstalled ?
+                  <div>
+                    {isConnectedToRopsten ?
+                        <>
+                          {connectedWallet ?
+                              <>
+                                <ACard
+                                    title={quizBalance}
+                                    label={'$QUIZ balance'}
+                                />
+                                <Survey />
+                              </>
+                              :
+                              <ACard
+                                  label={'You need to connect a wallet to continue.'}
+                                  buttonText={'Connect Wallet'}
+                                  onClick={connectWallet}
+                              />
+                          }
+                        </>:
+                        <ACard
+                            label={'You need to switch to the Ropsten Test Network to continue.'}
+                            buttonText={'Switch to Ropsten'}
+                            onClick={changeNetwork}
+                        />
+                    }
+                  </div>
+                  :
+                  <ACard
+                      label={'Refresh this page after installing Metamask.'}
+                      buttonText={'Go to Metamask'}
+                      href={'https://metamask.io/download/'}
+                      target={'_blank'}
+                  />
+            }</>
+        }
+    </Layout>
+
   )
 }
