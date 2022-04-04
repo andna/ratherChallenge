@@ -4,7 +4,7 @@ import detectEthereumProvider from '@metamask/detect-provider'
 import Loader from "../components/loader";
 import ACard from "../components/ACard";
 import Layout from "../components/layout";
-import tokenApi from "./tokenAbiQuiz"
+import tokenApi from "./tokenAbiQuiz.json"
 import Survey from "../components/survey";
 
 
@@ -22,6 +22,12 @@ export default function Home() {
   useEffect(function mount() {
     detectEthereum();
   }, [])
+
+  useEffect(() => {
+    if(connectedWallet){
+      obtainBalance(connectedWallet)
+    }
+  }, [connectedWallet])
 
   useEffect(() => {
     if(provider){
@@ -48,8 +54,7 @@ export default function Home() {
   }, [hasMetamaskInstalled])
 
   function updateAccounts(accounts){
-    obtainBalance(accounts[0]);
-    setConnectedWallet(accounts[0])
+    setConnectedWallet(accounts[0]);
   }
 
   async function obtainBalance(accountAddress){
@@ -59,6 +64,10 @@ export default function Home() {
       'mode': 'cors', 'headers': { 'Access-Control-Allow-Origin': '*', }})
         .then(res => res.json()).then(data => tokenApi = data);*/
 
+    if(!provider || provider == undefined){
+      await setNewProvider();
+    }
+    console.log(tokenApi)
     const contract = new ethers.Contract(tokenAddressQUIZ, tokenApi, provider);
     const balance = (await contract.balanceOf(accountAddress)).toString();
     setQuizBalance(balance);
