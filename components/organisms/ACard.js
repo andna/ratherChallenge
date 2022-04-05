@@ -34,24 +34,28 @@ export default function ACard({
                 {label}
                 {children}
             </CardContent>
-            {buttonText &&
-                <CardActions>
-                    {hint &&
-                        <Typography fontSize={12} p={1} className={hint.style}>
-                            {hint.text}
-                        </Typography>
-                    }
+
+            <CardActions>
+                {hint &&
+                    <Typography fontSize={12} p={1} className={hint.style} sx={{ opacity: 0.3 }}>
+                        {hint.text}
+                    </Typography>
+                }
+                {buttonText &&
                     <Button variant="contained"
                             target={target}
                             href={href}
                             onClick={onClick}
                             disabled={disabled}
-                            sx={{marginLeft: "auto"}}
+                            sx={{marginLeft: "auto",
+                                color: disabled ? '#3e596c !important' : 'auto'
+                            }}
                     >
                         {buttonText}
                     </Button>
-                </CardActions>
-            }
+                }
+            </CardActions>
+
         </Card>
     )
 }

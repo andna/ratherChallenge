@@ -120,6 +120,11 @@ export default function Home() {
         .catch(() => console.log('user rejected request'));
   }
 
+  const submitQuestions = (questions) => {
+    //TODO SUBMIT TO VALIDATOR CONTRACT
+    console.log(questions[0].answer, questions[1].answer, questions[2].answer)
+  }
+
 
   return (
 
@@ -136,11 +141,13 @@ export default function Home() {
                                 <ACard
                                     title={quizBalance}
                                     label={'$QUIZ balance'}
+                                    hint={{text: connectedWallet}}
                                 />
-                                <Survey />
+                                <Survey submit={submitQuestions}/>
                               </>
                               :
                               <ACard
+                                  title={'🛑'}
                                   label={'You need to connect a wallet to continue.'}
                                   buttonText={'Connect Wallet'}
                                   onClick={connectWallet}
@@ -148,6 +155,7 @@ export default function Home() {
                           }
                         </>:
                         <ACard
+                            title={'🌐'}
                             label={'You need to switch to the Ropsten Test Network to continue.'}
                             buttonText={'Switch to Ropsten'}
                             onClick={changeNetwork}
@@ -156,6 +164,7 @@ export default function Home() {
                   </div>
                   :
                   <ACard
+                      title={'🛑'}
                       label={'Refresh this page after installing Metamask.'}
                       buttonText={'Go to Metamask'}
                       href={'https://metamask.io/download/'}

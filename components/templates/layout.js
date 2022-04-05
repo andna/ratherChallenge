@@ -19,6 +19,7 @@ export default function Layout({children}) {
             },
             text: {
                 primary: '#ffffff',
+                secondary: '#ffffff',
             },
         },
     });
