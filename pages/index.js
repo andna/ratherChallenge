@@ -1,10 +1,10 @@
 import React, { useEffect, useState } from "react";
 import { ethers } from 'ethers';
 import detectEthereumProvider from '@metamask/detect-provider'
-import Loader from "../components/loader";
-import ACard from "../components/ACard";
-import Layout from "../components/layout";
-import tokenApi from "./tokenAbiQuiz.json"
+import Loader from "../components/atoms/loader";
+import ACard from "../components/organisms/ACard";
+import Layout from "../components/templates/layout";
+import tokenApi from "./api/tokenAbiQuiz.json"
 import Survey from "../components/survey";
 
 
