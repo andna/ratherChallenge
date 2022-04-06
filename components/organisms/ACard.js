@@ -19,7 +19,7 @@ export default function ACard({
 
 
     return (
-        <Card sx={{minWidth: 340, marginBottom: 2}}>
+        <Card sx={{width: 375, marginBottom: 2}}>
             {img &&
                 <CardMedia
                     component="img"
