@@ -62,7 +62,7 @@ export default function Survey({submit}) {
                 >
                     <ul>
                         {surveyData.questions.map(question => {
-                            return <li><b>{question.text}</b> : <i>{question.answer ? question.answer : "\"\""}</i></li>
+                            return <li key={question.text}><b>{question.text}</b> : <i>{question.answer ? question.answer : "\"\""}</i></li>
                         })}
                     </ul>
                 </ACard>
