@@ -19,7 +19,7 @@ export default function Form({questionData, setCanContinue, selectedValue, chang
 
     return (
         <FormControl>
-            <FormLabel  id="demo-radio-buttons-group-label" sx={{color: 'white !important'}}>
+            <FormLabel  id="demo-radio-buttons-group-label">
                 <b>{questionData?.text}</b>
             </FormLabel>
             <RadioGroup

@@ -1,7 +1,7 @@
 import React, {useEffect, useState} from "react";
-import ACard from "../organisms/ACard";
+import ACard from "../../organisms/ACard";
 import surveyData from "./surveyData.json"
-import Form from "../molecules/form";
+import Form from "../../molecules/form";
 import styles from './survey.module.css'
 
 export default function Survey({submit}) {

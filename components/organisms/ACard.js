@@ -30,12 +30,11 @@ export default function ACard({
                 />
             }
             <CardContent>
-                {title && <h1>{title}</h1>}
+                {title && <h1 style={{marginTop: 0}}>{title}</h1>}
                 {label}
                 {children}
             </CardContent>
-
-            <CardActions>
+            {(hint || buttonText) && <CardActions>
                 {hint &&
                     <Typography fontSize={12} p={1} className={hint.style} sx={{ opacity: 0.3 }}>
                         {hint.text}
@@ -54,7 +53,8 @@ export default function ACard({
                         {buttonText}
                     </Button>
                 }
-            </CardActions>
+            </CardActions> }
+
 
         </Card>
     )
