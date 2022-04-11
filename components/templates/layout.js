@@ -109,7 +109,7 @@ export default function Layout({children, currentAddress}) {
                     {children}
                 </Container>
             </ThemeProvider>
-            <p style={styles.footer}>
+            <p style={styles.footer}>38
                by <a style={styles.github}
                     href="https://github.com/andna/ratherChallenge"
                     target="_blank" rel="noreferrer">

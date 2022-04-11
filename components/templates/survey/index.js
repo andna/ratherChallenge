@@ -4,7 +4,7 @@ import surveyData from "./surveyData.json"
 import Form from "../../molecules/form";
 import styles from './survey.module.css'
 
-export default function Survey({submit}) {
+export default function Survey({submit, finishedSurvey, setFinishedSurvey}) {
 
     const [startedSurvey, setStartedSurvey] = useState();
     const defaultValue = '';
@@ -13,7 +13,6 @@ export default function Survey({submit}) {
     const [currentTime, setCurrentTime] = useState(0);
     const [canContinue, setCanContinue] = useState();
     const [selectedValue, setSelectedValue] = useState(defaultValue);
-    const [finishedSurvey, setFinishedSurvey] = useState();
 
 
     const nextQuestion = () => {
@@ -55,7 +54,7 @@ export default function Survey({submit}) {
             {finishedSurvey
                 ?
                 <ACard
-                    title={'🎉 Congratulations!'}
+                    title={'🎉 Survey finished'}
                     label={'You finished your daily survey. Here are your answers:'}
                     buttonText={'Submit to claim tokens'}
                     onClick={() => submit(surveyData.questions)}

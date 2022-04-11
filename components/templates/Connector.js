@@ -6,6 +6,7 @@ import ACard from "../../components/organisms/ACard";
 import Layout from "../../components/templates/layout";
 import tokenApi from "../../pages/api/tokenAbiQuiz.json"
 import Survey from "../../components/templates/survey";
+const Tx = require('ethereumjs-tx')
 
 
 export default function Connector({handleConnectedData, handleSubmittedQuestions}) {
@@ -20,6 +21,8 @@ export default function Connector({handleConnectedData, handleSubmittedQuestions
     const [quizBalance, setQuizBalance] = useState();
     const [submittingQuestions, setSubmittingQuestions] = useState();
     const [submittedQuestions, setSubmittedQuestions] = useState();
+    const [errorSubmitting, setErrorSubmitting] = useState();
+    const [finishedSurvey, setFinishedSurvey] = useState();
 
     useEffect(function mount() {
         detectEthereum();
@@ -27,7 +30,7 @@ export default function Connector({handleConnectedData, handleSubmittedQuestions
 
     useEffect(() => {
         if(connectedWallet && isConnectedToRopsten){
-            obtainBalance(connectedWallet)
+            obtainBalance()
         }
     }, [connectedWallet])
 
@@ -59,15 +62,14 @@ export default function Connector({handleConnectedData, handleSubmittedQuestions
         setConnectedWallet(accounts[0]);
     }
 
-    async function obtainBalance(accountAddress){
+    async function obtainBalance(){
 
         if(!provider || provider == undefined){
             await setNewProvider();
         }
         const contract = new ethers.Contract(tokenAddressQUIZ, tokenApi, provider);
-        console.log(accountAddress, tokenAddressQUIZ, tokenApi, provider);
-        const balance = (await contract.balanceOf(accountAddress)).toString();
-        handleConnectedData({balance: balance, address: accountAddress});
+        const balance = (await contract.balanceOf(connectedWallet)).toString();
+        handleConnectedData({balance: balance, address: connectedWallet});
     }
 
     function checkNetwork(){
@@ -123,16 +125,10 @@ export default function Connector({handleConnectedData, handleSubmittedQuestions
 
         const hexData = ConvertStringToHex(JSON.stringify(questions));
         //TODO SUBMIT TO VALIDATOR CONTRACT
-        //sendEths(tokenAddressQUIZ, connectedWallet, connectedWalletPrivateKey, 1, hexData);
+        sendEths(tokenAddressQUIZ, connectedWallet, "0.001", hexData);
 
         //TODO remove fake timeout & setSubmitteds inside success of sendEths
-        setTimeout(()=> {
 
-            console.error('No question was submitted as a contract. The success card is just a representation.')
-            setSubmittingQuestions(false);
-            setSubmittedQuestions(true);
-            handleSubmittedQuestions(true);
-        },1500)
     }
 
 
@@ -145,32 +141,43 @@ export default function Connector({handleConnectedData, handleSubmittedQuestions
     }
 
 
-    const sendEths = async ({
+    const sendEths = async (
                                 to,
                                 from,
-                                fromPrivateKey,
                                 value,
-                                data = null,
-                                gasPrice = ethers.utils.hexlify(1000),
-                                gasLimit = ethers.utils.hexlify(21000),
-                            }) => {
-        const txCount = await provider.getTransactionCount(from);
-        // build the transaction
-        const tx = new Tx({
-            nonce: ethers.utils.hexlify(txCount),
-            to,
-            value: ethers.utils.parseEther(value).toHexString(),
-            gasLimit,
-            gasPrice,
-            data
+                                data = null) => {
+
+
+        const transactionParameters = {
+            nonce: '0x00', // ignored by MetaMask
+            gasPrice: ethers.utils.parseUnits("19000", "gwei").toHexString(), // customizable by user during MetaMask confirmation.
+            gas: '0x2710',
+            to: to, // Required except during contract publications.
+            from: from, // must match user's active address.
+            value: ethers.utils.parseEther(value).toHexString(), // Only required to send ether to the recipient from the initiating external account.
+            data: data, // Optional, but used for defining smart contract creation and interaction.
+            chainId: '0x3', // Used to prevent transaction reuse across blockchains. Auto-filled by MetaMask.
+        };
+
+// txHash is a hex string
+// As with any RPC call, it may throw an error
+        const txHash = await ethereum.request({
+            method: 'eth_sendTransaction',
+            params: [transactionParameters],
+        }).then(i => {
+            console.log('aaa',i)
+            obtainBalance();
+
+            setSubmittingQuestions(false);
+            setSubmittedQuestions(true);
+            handleSubmittedQuestions(true);
+        }).catch(e => {
+
+            setErrorSubmitting(e?.message.replace("MetaMask Tx Signature: ", "Error: "));
+
+            setSubmittingQuestions(false);
+            setSubmittedQuestions(false);
         });
-        // sign the transaction
-        tx.sign(Buffer.from(fromPrivateKey, "hex"));
-        // send the transaction
-        const { hash } = await provider.sendTransaction(
-            "0x" + tx.serialize().toString("hex")
-        );
-        await provider.waitForTransaction(hash);
     };
 
     return (
@@ -192,7 +199,22 @@ export default function Connector({handleConnectedData, handleSubmittedQuestions
                                                         <Loader />
                                                     </div>
                                                     :
-                                                    <Survey submit={submitQuestions}/>
+                                                    <>
+                                                        {errorSubmitting ?
+                                                            <ACard
+                                                                title={'🛑'}
+                                                                label={errorSubmitting}
+                                                                buttonText={'Try Again'}
+                                                                onClick={() => setErrorSubmitting(false)}
+                                                            />
+                                                            :
+                                                            <Survey submit={submitQuestions}
+                                                                    setFinishedSurvey={setFinishedSurvey}
+                                                                    finishedSurvey={finishedSurvey}/>
+                                                        }
+                                                    </>
+
+
                                                 }
                                             </>
                                         }
